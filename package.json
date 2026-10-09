@@ -1,0 +1,24 @@
+{
+  "name": "arena-forge",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Local first-person tactical arena game",
+  "scripts": {
+    "start": "vite --host 127.0.0.1 --port 4185 --strictPort",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 4185 --strictPort",
+    "test": "node --test test/*.test.mjs",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "fast-xml-parser": "^5.11.1",
+    "polygon-clipping": "^0.15.7",
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "vite": "^8.3.1"
+  },
+  "engines": { "node": ">=22.12.0" }
+}

@@ -41,6 +41,15 @@ test('Waffenkammer verkauft Waffen gegen Credits und legt sie im Rucksack ab', a
   await expect(page.locator('.inventory-slot').filter({ hasText: 'Sturmgewehr · A4' })).toHaveCount(1);
 });
 
+test('Sandbox-Möbel haben eigene erkennbare Icons im Katalog und Inventar', async ({ page }) => {
+  await page.goto('/');
+  await page.keyboard.press('KeyI');
+  await page.locator('#creative-toggle').click();
+  await expect(page.locator('#creative-grid .furniture-svg')).toHaveCount(25);
+  await page.getByRole('button', { name: 'Stuhl zum Inventar hinzufügen' }).click();
+  await expect(page.locator('.inventory-slot .furniture-svg')).toHaveCount(1);
+});
+
 test('Der Bogen lässt sich ausrüsten, ohne das Spiel zu unterbrechen', async ({ page }) => {
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));

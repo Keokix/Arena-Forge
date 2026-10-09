@@ -26,6 +26,33 @@ const weaponSvg = {
   smg: '<path d="M4 14h11v8H4z" fill="#566e7c"/><path d="M14 10h36v11H14z" fill="#92aab8"/><path d="M50 13h12v4H50z" fill="#b7cbd6"/><path d="M20 21v9h7v-9M33 21l3 10h8l-4-10" fill="#4c6574"/><path d="M33 7h12v3H33z" fill="#648897"/>',
   sniper: '<path d="M3 12h15l8 4-7 7H3z" fill="#7d9a7b"/><path d="M22 12h26v7H22z" fill="#a2b9c4"/><path d="M46 13h17v3H46z" fill="#c1d2d9"/><path d="M28 5h17v6H28z" fill="#607e8f"/><path d="M30 8h13" stroke="#b0d9db" stroke-width="2"/><path d="m24 20-4 9h7l4-9M43 20v10" stroke="#6d8796" stroke-width="4"/>',
 };
+const furnitureSvg = {
+  chair: '<path d="M18 8h25v14H18zM20 22v9m20-9v9M16 31h5m19 0h5" fill="#7b563b" stroke="#c69a6d" stroke-width="2"/>',
+  table: '<path d="M8 12h48v8H8zM14 20v11m36-11v11" fill="#8d6748" stroke="#d2aa78" stroke-width="2"/>',
+  desk: '<path d="M6 11h52v8H6zM11 19v12m42-12v12M18 20v8h12v-8" fill="#76513a" stroke="#c99a69" stroke-width="2"/>',
+  sofa: '<path d="M8 16q0-7 7-7h34q7 0 7 7v12H8z" fill="#4f8277" stroke="#9bbdb0" stroke-width="2"/><path d="M12 19h40M17 10v9m30-9v9" stroke="#d2e3d7" stroke-width="2"/>',
+  armchair: '<path d="M16 12q0-6 6-6h20q6 0 6 6v18H16z" fill="#577d73" stroke="#a8c0b5" stroke-width="2"/><path d="M10 17h6v12m32-12h6v12" stroke="#a8c0b5" stroke-width="4"/>',
+  bed: '<path d="M7 12h50v16H7z" fill="#638995" stroke="#d5e4e8" stroke-width="2"/><path d="M10 12V8h14v8m-14 12v4m42-4v4" stroke="#b48760" stroke-width="3"/><path d="M26 15h26v9H26z" fill="#d7e3e4"/>',
+  closet: '<path d="M16 4h32v28H16z" fill="#76513a" stroke="#c79b6b" stroke-width="2"/><path d="M32 5v26M28 18h2m4 0h2" stroke="#d5ba83" stroke-width="2"/>',
+  cabinet: '<path d="M10 11h44v19H10z" fill="#825b40" stroke="#cca270" stroke-width="2"/><path d="M12 18h40M32 12v17M27 15h2m6 0h2m-10 8h2m6 0h2" stroke="#e2c18b" stroke-width="2"/>',
+  bathtub: '<path d="M7 15h50v8q-3 8-10 8H17q-7 0-10-8z" fill="#dfe8e7" stroke="#79afb5" stroke-width="2"/><path d="M16 14v-4h12" stroke="#79afb5" stroke-width="3"/>',
+  sink: '<path d="M16 10h32v10H16z" fill="#dce9e8" stroke="#78afb5" stroke-width="2"/><path d="M24 20v11m16-11v11M27 9V5h10" stroke="#78afb5" stroke-width="3"/>',
+  toilet: '<path d="M17 7h22v10H17zM20 17h25v8q-2 7-12 7t-13-7z" fill="#e3e9e6" stroke="#85a9ab" stroke-width="2"/>',
+  shower: '<path d="M12 4h40v28H12z" fill="#75b7c2" fill-opacity=".35" stroke="#a9dce1" stroke-width="2"/><path d="M22 4v9h12m-6 0v6" stroke="#d8f5f3" stroke-width="3"/><path d="M20 24h24" stroke="#d8f5f3" stroke-width="2"/>',
+  fridge: '<path d="M18 4h28v28H18z" fill="#a8bbc1" stroke="#e4eef0" stroke-width="2"/><path d="M19 18h26M39 9v5m0 8v5" stroke="#63838c" stroke-width="2"/>',
+  stove: '<path d="M15 9h34v22H15z" fill="#606d75" stroke="#bac9ce" stroke-width="2"/><circle cx="24" cy="15" r="3" fill="#202c31"/><circle cx="40" cy="15" r="3" fill="#202c31"/><path d="M20 25h24" stroke="#d1dee0" stroke-width="2"/>',
+  machine: '<path d="M12 8h40v23H12z" fill="#687b7d" stroke="#b3c2b9" stroke-width="2"/><circle cx="25" cy="19" r="7" fill="#273d3e" stroke="#91c9b2" stroke-width="2"/><path d="M39 14h8m-8 5h8m-8 5h8" stroke="#d0b26b" stroke-width="2"/>',
+  lamp: '<path d="M31 7q-9 5 0 12 9-7 0-12z" fill="#f3d878" stroke="#fff0ad" stroke-width="2"/><path d="M31 19v10m-9 2h18" stroke="#71858c" stroke-width="3"/>',
+  crate: '<path d="M10 7h44v25H10z" fill="#a87948" stroke="#e2bd7a" stroke-width="2"/><path d="m12 9 40 21M52 9 12 30M10 19h44" stroke="#765033" stroke-width="3"/>',
+  barrel: '<path d="M19 5h26l4 5v17l-4 5H19l-4-5V10z" fill="#6d8790" stroke="#c1d4d6" stroke-width="2"/><path d="M16 12h32M16 25h32" stroke="#344952" stroke-width="3"/>',
+  sandbag: '<path d="M7 24q3-8 12-6 6-9 14 0 10-3 13 6v7H7z" fill="#969166" stroke="#d2c98f" stroke-width="2"/><path d="M11 25h31" stroke="#6b6b4d" stroke-width="2"/>',
+  rack: '<path d="M10 5v27m44-27v27M10 11h44M10 20h44M10 29h44" stroke="#a8b5af" stroke-width="3"/><path d="M15 12h9v7h-9zm17 0h9v7h-9zm-17 9h9v8h-9zm17 0h9v8h-9z" fill="#936847"/>',
+  container: '<path d="M4 8h56v23H4z" fill="#607f79" stroke="#b3d0c7" stroke-width="2"/><path d="M12 9v21m9-21v21m9-21v21m9-21v21m9-21v21" stroke="#385b58" stroke-width="3"/>',
+  console: '<path d="M9 12h46l-5 17H14z" fill="#526a78" stroke="#a7bdc8" stroke-width="2"/><path d="M16 14h32v8H16z" fill="#1c4546" stroke="#60cdb9" stroke-width="2"/><path d="M20 26h24" stroke="#d1ae64" stroke-width="2"/>',
+  barricade: '<path d="M6 12h52v16H6z" fill="#9da7a5" stroke="#d4ddd7" stroke-width="2"/><path d="m9 26 8-12m8 12 8-12m8 12 8-12" stroke="#6d7778" stroke-width="3"/>',
+  bench: '<path d="M8 12h48v8H8zM11 21h42v5H11zM16 26v6m32-6v6" fill="#9b704a" stroke="#d6ab73" stroke-width="2"/>',
+  planter: '<path d="M12 19h40l-5 12H17z" fill="#8b664c" stroke="#d0a774" stroke-width="2"/><path d="M24 19q-7-10 0-13 1 8 7 13 2-10 10-10-3 8 0 10" fill="#5d8958" stroke="#9dcc8d" stroke-width="2"/>',
+};
 
 let viewer;
 let arena;
@@ -57,6 +84,8 @@ function iconFor(item) {
   if (!item) return "·";
   const weaponId = item.weaponId || item.id;
   if (weaponSvg[weaponId]) return `<svg class="weapon-svg weapon-${weaponId}" viewBox="0 0 64 34" aria-hidden="true">${weaponSvg[weaponId]}</svg>`;
+  const furnitureId = item.icon || item.id;
+  if (furnitureSvg[furnitureId]) return `<svg class="furniture-svg furniture-${furnitureId}" viewBox="0 0 64 36" aria-hidden="true">${furnitureSvg[furnitureId]}</svg>`;
   return item.icon || itemIcons[item.category] || "◆";
 }
 

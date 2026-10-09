@@ -1565,6 +1565,7 @@ export class Viewer {
     return {
       id: item.object.name,
       label: item.object.userData.itemLabel,
+      icon: item.object.userData.itemIcon,
       category: item.object.userData.category,
     };
   }
@@ -1635,6 +1636,7 @@ export class Viewer {
       0,
     );
     object.userData.itemLabel = template.label;
+    object.userData.itemIcon = template.id;
     object.userData.inInventory = true;
     object.visible = false;
     this.model.add(object);

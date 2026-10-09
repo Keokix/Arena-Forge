@@ -919,6 +919,16 @@ export class Viewer {
       this.camera,
       this.renderer.domElement,
     );
+    // OrbitControls and PointerLockControls both manipulate the camera.  Only
+    // one of them may be active at a time; otherwise delayed orbit damping can
+    // overwrite a mouse-look update and make the view appear to snap back.
+    this.pointer.enabled = false;
+    this.pointer.minPolarAngle = 0.025;
+    this.pointer.maxPolarAngle = Math.PI - 0.025;
+    this.lockRequested = false;
+    this.lookEuler = new THREE.Euler(0, 0, 0, "YXZ");
+    this.renderer.domElement.tabIndex = 0;
+    this.renderer.domElement.setAttribute("aria-label", "Spielansicht");
     this.keys = new Set();
     this.hotbar = Array(9).fill(null);
     this.inventory = Array(27).fill(null);
@@ -931,7 +941,7 @@ export class Viewer {
     this.raycaster = new THREE.Raycaster();
     this.clock = new THREE.Clock();
     this.renderer.domElement.addEventListener("mousedown", (event) => {
-      if (!this.game || this.paused || this.inventoryOpen || !this.pointer.isLocked || this.match?.phase !== 'active') return;
+      if (!this.canAcceptGameInput()) return;
       if (event.button === 0) {
         event.preventDefault();
         this.primaryHeld = true;
@@ -948,10 +958,23 @@ export class Viewer {
         else this.placeSelected();
       }
     });
-    this.pointer.addEventListener("lock", () => this.gameEvent(true));
-    this.pointer.addEventListener("unlock", () => this.gameEvent(false));
+    // PointerLockControls emits its events just before it updates isLocked.
+    // Deferring one microtask keeps the UI and input gates in the same state.
+    this.pointer.addEventListener("lock", () => {
+      this.lockRequested = false;
+      queueMicrotask(() => this.gameEvent(this.isPointerLocked()));
+    });
+    this.pointer.addEventListener("unlock", () => {
+      this.lockRequested = false;
+      queueMicrotask(() => this.gameEvent(false));
+    });
+    document.addEventListener("pointerlockerror", () => {
+      this.lockRequested = false;
+      this.clearInput();
+      this.gameEvent(false);
+    });
     addEventListener("keydown", (event) => {
-      if (!this.game || this.inventoryOpen || !this.pointer.isLocked) return;
+      if (!this.canAcceptGameInput()) return;
       if (/^Digit[1-9]$/.test(event.code)) {
         event.preventDefault();
         this.selectHotbar(Number(event.code.slice(5)) - 1, true);
@@ -1007,7 +1030,7 @@ export class Viewer {
     this.renderer.setAnimationLoop(() => {
       const delta = Math.min(this.clock.getDelta(), 0.05);
       if (this.game) {
-        if (!this.paused && !this.inventoryOpen && this.pointer.isLocked && this.match?.phase === 'active') {
+        if (this.canAcceptGameInput()) {
           this.updatePlayerSystems(delta);
           this.updateHeldWeaponAnimation(delta);
           this.updateImpacts(delta);
@@ -1022,7 +1045,17 @@ export class Viewer {
       this.renderer.render(this.scene, this.camera);
     });
   }
+  isPointerLocked() {
+    return this.pointer.isLocked && document.pointerLockElement === this.renderer.domElement;
+  }
+  canAcceptGameInput() {
+    return this.game && !this.paused && !this.inventoryOpen && this.isPointerLocked() && this.match?.phase === "active";
+  }
   gameEvent(locked) {
+    if (locked) {
+      this.controls.enabled = false;
+      this.pointer.enabled = true;
+    }
     if (!locked) this.clearInput();
     if (locked && this.match?.phase === 'ready') { this.match.start(); this.emitMatch(); }
     this.container.dispatchEvent(
@@ -1225,6 +1258,7 @@ export class Viewer {
   setGame(enabled, project, rows, gameConfig = {}) {
     this.game = enabled;
     this.controls.enabled = !enabled;
+    this.pointer.enabled = enabled;
     this.clearInput();
     if (!enabled) {
       this.savedPlayerView = { position: this.camera.position.clone(), quaternion: this.camera.quaternion.clone() };
@@ -2006,9 +2040,20 @@ export class Viewer {
     }
     this.noises.push({ position: { x: this.camera.position.x, y: -this.camera.position.z }, radius: weapon.id === 'bow' ? 8 : 32, age: 0, sourceId: 'player' });
     if (this.noises.length > 12) this.noises.shift();
-    this.camera.rotation.x = Math.min(1.35, this.camera.rotation.x + (weapon.recoil ?? 0) * (this.ads ? .7 : 1));
-    this.camera.rotation.y += (Math.random() - .5) * (weapon.recoil ?? 0) * .65;
+    this.applyLookRecoil(
+      (weapon.recoil ?? 0) * (this.ads ? .7 : 1),
+      (Math.random() - .5) * (weapon.recoil ?? 0) * .65,
+    );
     this.playShot(weapon);
+  }
+  applyLookRecoil(pitch, yaw) {
+    // Match PointerLockControls' YXZ Euler convention.  Editing
+    // camera.rotation directly after lookAt/OrbitControls can otherwise use a
+    // stale Euler representation and produce an intermittent camera jump.
+    this.lookEuler.setFromQuaternion(this.camera.quaternion, "YXZ");
+    this.lookEuler.x = THREE.MathUtils.clamp(this.lookEuler.x + pitch, -1.45, 1.45);
+    this.lookEuler.y += yaw;
+    this.camera.quaternion.setFromEuler(this.lookEuler);
   }
   playShot(weapon, worldPosition = null) {
     const frequency =
@@ -2720,7 +2765,12 @@ export class Viewer {
     npc.group.traverse(mesh => { if (mesh.material?.emissive) mesh.material.emissive.setHex(npc.flashTime > 0 ? 0x46170c : 0); });
   }
   lockGame() {
-    if (this.game && !this.pointer.isLocked) this.pointer.lock();
+    if (!this.game || this.paused || this.inventoryOpen || this.match?.phase === "victory" || this.match?.phase === "defeat" || this.isPointerLocked() || this.lockRequested) return;
+    this.controls.enabled = false;
+    this.pointer.enabled = true;
+    this.lockRequested = true;
+    this.renderer.domElement.focus({ preventScroll: true });
+    this.pointer.lock();
   }
   resetPlayer() {
     if (!this.walkable?.length) return;
@@ -2787,8 +2837,10 @@ export class Viewer {
           .add(new THREE.Vector3(0, targets[0].userData.height * 0.5, 0)),
       );
     else this.camera.lookAt(spawn.x, this.eyeHeight, -spawn.y - 1);
+    // Keep the same rotation convention as pointer lock after lookAt().
+    this.camera.rotation.reorder("YXZ");
     this.updatePlayerData();
-    this.gameEvent(this.pointer.isLocked);
+    this.gameEvent(this.isPointerLocked());
   }
   containsPoint(x, y) {
     return containsWalkable(this.walkable, x, y);

@@ -61,6 +61,21 @@ test('Eine laufende Runde verarbeitet Bewegung und Gegner-KI ohne Laufzeitfehler
   await expect(page.locator('#match-wave')).toContainText(/ARENA SICHERN|WELLE/);
 });
 
+test('Shooter-Steuerung sperrt den Mauszeiger und bewegt den Spieler ohne Eingabe-Altlasten', async ({ page }) => {
+  await page.goto('/');
+  const viewport = page.locator('#viewport');
+  await page.locator('#game-start').click();
+  await expect(page.locator('#ready-panel')).toHaveClass(/running/);
+
+  const before = await viewport.evaluate((element) => `${element.dataset.playerX},${element.dataset.playerY}`);
+  await page.keyboard.down('KeyW');
+  await page.waitForTimeout(350);
+  await page.keyboard.up('KeyW');
+  const after = await viewport.evaluate((element) => `${element.dataset.playerX},${element.dataset.playerY}`);
+
+  expect(after).not.toBe(before);
+});
+
 test('Eine große schwere Arena bleibt mit 24 Gegnern reaktionsfähig', async ({ page }) => {
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));

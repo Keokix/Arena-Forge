@@ -887,6 +887,7 @@ export class Viewer {
     this.playerArmor = 0;
     this.playerKills = 0;
     this.playerDeaths = 0;
+    this.credits = 0;
     this.playerAttackCooldown = 0;
     this.playerStamina = 100;
     this.dashRemaining = 0;
@@ -1102,7 +1103,8 @@ export class Viewer {
       this.playerArmor = Math.min(100, this.playerArmor + 25);
       this.refillAmmo(1);
       this.spawnLoot(2);
-      this.emitHotbar(`Welle ${this.match.wave} · Gesundheit und Munition ergänzt.`);
+      this.addCredits(1200);
+      this.emitHotbar(`Welle ${this.match.wave} · +1.200 Credits, Gesundheit und Munition ergänzt.`);
       this.invulnerableTime = 2;
     }
     if (result === 'victory' || result === 'defeat') this.finishMatch();
@@ -1291,6 +1293,7 @@ export class Viewer {
     this.playerArmor = 35;
     this.playerStamina = 100;
     this.playerKills = this.playerDeaths = 0;
+    this.credits = 2800;
     this.playerAttackCooldown = 0;
     this.boostRemaining = this.dashRemaining = 0;
     this.invulnerableTime = 3;
@@ -1366,7 +1369,7 @@ export class Viewer {
           Math.max(6, rows.filter((row) => row.usage !== "outdoor").length + 2),
         ),
       );
-    this.emitPlayerStatus();
+    this.emitPlayerStatus("Rundenbudget: 2.800 Credits.");
     this.emitHotbar();
     this.match.alive = this.npcs.length;
     this.match.total = this.npcs.length;
@@ -1426,10 +1429,16 @@ export class Viewer {
           boosted: this.boostRemaining > 0,
           kills: this.playerKills,
           deaths: this.playerDeaths,
+          credits: this.credits,
           message,
         },
       }),
     );
+  }
+  addCredits(amount) {
+    this.credits = Math.max(0, this.credits + Math.round(amount));
+    this.emitPlayerStatus();
+    return this.credits;
   }
   emitHotbar(message = "") {
     this.updateHeldWeapon();
@@ -1645,6 +1654,24 @@ export class Viewer {
     }
     storage[index] = this.makeWeaponItem(weapon);
     this.emitHotbar(`${weapon.label} zum Inventar hinzugefügt.`);
+    return true;
+  }
+  buyWeapon(weaponId) {
+    const weapon = PLAYER_WEAPONS.find((entry) => entry.id === weaponId);
+    const target = this.inventory.findIndex((item) => !item);
+    if (!weapon) return false;
+    if (target < 0) {
+      this.emitHotbar("Kein freier Platz im Rucksack.");
+      return false;
+    }
+    if (this.credits < (weapon.price ?? 0)) {
+      this.emitHotbar(`Nicht genug Credits für ${weapon.label}.`);
+      return false;
+    }
+    this.credits -= weapon.price ?? 0;
+    this.inventory[target] = makeWeaponItem(weapon);
+    this.emitHotbar(`${weapon.label} gekauft · −${weapon.price ?? 0} Credits.`);
+    this.emitPlayerStatus();
     return true;
   }
   selectHotbar(value, absolute = false) {
@@ -2653,7 +2680,11 @@ export class Viewer {
     target.dead = true;
     target.deathTime = 2;
     target.healthBar.visible = false;
-    if (attacker?.type === 'player') { this.playerKills++; this.match.kill(attacker.headshot); }
+    if (attacker?.type === 'player') {
+      this.playerKills++;
+      this.match.kill(attacker.headshot);
+      this.addCredits(attacker.headshot ? 350 : 300);
+    }
     this.dispatch('kill-feed', { killer: attacker?.type === 'player' ? 'Du' : attacker?.npc?.name ?? 'Arena', victim: target.name, weapon: attacker?.weapon ?? 'Kampf', player: attacker?.type === 'player' });
     if (this.loot.length < 26) {
       const drop = createLootCrate('supply');
@@ -2676,6 +2707,7 @@ export class Viewer {
     this.emitPlayerStatus();
     if (this.playerHealth > 0) return;
     this.playerDeaths++;
+    this.credits = Math.max(0, this.credits - 700);
     this.dispatch('kill-feed', { killer: attacker?.name ?? 'Explosion', victim: 'Du', weapon: attacker?.weapon.label ?? 'Granate', player: false });
     if (!this.match.die()) { this.finishMatch(); return; }
     this.playerHealth = 100;
@@ -2685,7 +2717,7 @@ export class Viewer {
     this.clearInput();
     this.resetPlayer();
     this.refillAmmo(1);
-    this.emitPlayerStatus('Neu erschienen · 3 Sekunden Schutz.');
+    this.emitPlayerStatus('Neu erschienen · −700 Credits · 3 Sekunden Schutz.');
     this.emitHotbar(); this.emitMatch();
   }
   updateNpcs(delta) {

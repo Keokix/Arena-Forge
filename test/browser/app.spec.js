@@ -31,6 +31,16 @@ test('Inventar, Fernkampfmunition und Pause sind verfügbar', async ({ page }) =
   await expect(page.locator('#pause-panel')).toBeVisible();
 });
 
+test('Waffenkammer verkauft Waffen gegen Credits und legt sie im Rucksack ab', async ({ page }) => {
+  await page.goto('/');
+  await page.keyboard.press('KeyI');
+  await page.getByRole('button', { name: '◈ Waffenkammer' }).click();
+  await expect(page.locator('#armory-section')).toBeVisible();
+  await page.getByRole('button', { name: 'Sturmgewehr · A4 für 2.400 Credits kaufen' }).click();
+  await expect(page.locator('#inventory-credits')).toHaveText('400');
+  await expect(page.locator('.inventory-slot').filter({ hasText: 'Sturmgewehr · A4' })).toHaveCount(1);
+});
+
 test('Der Bogen lässt sich ausrüsten, ohne das Spiel zu unterbrechen', async ({ page }) => {
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));

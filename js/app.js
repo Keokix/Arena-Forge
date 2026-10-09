@@ -73,6 +73,22 @@ function showMessage(message) {
   messageTimer = setTimeout(() => byId("game-message").classList.remove("visible"), 2400);
 }
 
+function formatCredits(value = 0) {
+  return Math.max(0, Number(value) || 0).toLocaleString("de-DE");
+}
+
+function updateCredits(value = 0) {
+  const label = formatCredits(value);
+  byId("credits-hud").textContent = label;
+  byId("inventory-credits").textContent = label;
+  byId("armory-credits").textContent = `◈ ${label}`;
+  document.querySelectorAll(".armory-buy").forEach((button) => {
+    const price = Number(button.dataset.price) || 0;
+    button.disabled = value < price;
+    button.textContent = value < price ? `${formatCredits(price)} Credits nötig` : `Kaufen · ${formatCredits(price)} Credits`;
+  });
+}
+
 function formatTime(seconds) {
   const time = Math.max(0, Math.ceil(Number(seconds) || 0));
   return `${Math.floor(time / 60).toString().padStart(2, "0")}:${(time % 60).toString().padStart(2, "0")}`;
@@ -173,6 +189,20 @@ function createInventoryUi() {
     });
     byId("creative-grid").append(card);
   }
+  for (const weapon of PLAYER_WEAPONS.filter((entry) => entry.price > 0)) {
+    const card = document.createElement("article");
+    card.className = "armory-item";
+    card.innerHTML = `<span class="slot-icon">${iconFor(weapon)}</span><div><strong>${weapon.label}</strong><small>◈ ${formatCredits(weapon.price)} Credits</small></div>`;
+    const buy = document.createElement("button");
+    buy.type = "button";
+    buy.className = "armory-buy";
+    buy.dataset.price = String(weapon.price);
+    buy.setAttribute("aria-label", `${weapon.label} für ${formatCredits(weapon.price)} Credits kaufen`);
+    buy.addEventListener("click", () => viewer?.buyWeapon(weapon.id));
+    card.append(buy);
+    byId("armory-grid").append(card);
+  }
+  updateCredits(0);
 }
 
 function filterCreative() {
@@ -394,6 +424,7 @@ function updatePlayerStatus(detail) {
   byId("pause-health").textContent = String(detail.health ?? 100);
   byId("pause-kills").textContent = String(detail.kills ?? 0);
   byId("pause-deaths").textContent = String(detail.deaths ?? 0);
+  updateCredits(detail.credits ?? 0);
   showMessage(detail.message);
 }
 
@@ -562,12 +593,25 @@ function bindEvents() {
   };
   byId("result-restart").onclick = () => restartMatch();
   byId("result-next").onclick = () => { generateArena(); viewer?.lockGame(); };
+  byId("armory-toggle").onclick = () => {
+    const open = byId("armory-section").hidden;
+    byId("armory-section").hidden = !open;
+    byId("creative-section").hidden = true;
+    byId("armory-toggle").setAttribute("aria-pressed", String(open));
+    byId("creative-toggle").setAttribute("aria-pressed", "false");
+    byId("armory-toggle").textContent = open ? "◈ Waffenkammer schließen" : "◈ Waffenkammer";
+    byId("creative-toggle").textContent = "✦ Sandbox-Katalog";
+    document.querySelector(".inventory-content").classList.toggle("creative-open", open);
+  };
   byId("creative-toggle").onclick = () => {
     const open = byId("creative-section").hidden;
     byId("creative-section").hidden = !open;
+    byId("armory-section").hidden = true;
     byId("creative-toggle").setAttribute("aria-pressed", String(open));
+    byId("armory-toggle").setAttribute("aria-pressed", "false");
     document.querySelector(".inventory-content").classList.toggle("creative-open", open);
     byId("creative-toggle").textContent = open ? "✦ Katalog schließen" : "✦ Sandbox-Katalog";
+    byId("armory-toggle").textContent = "◈ Waffenkammer";
     if (open) byId("creative-search").focus();
   };
   byId("creative-search").oninput = filterCreative;
